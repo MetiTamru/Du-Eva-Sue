@@ -10,6 +10,8 @@ import HomePage from "./Pages/HomePage";
 import Admin from "./Pages/Admin";
 import LoginPage from "./Components/LoginPage";
 import ForgetPassword from "./Components/ForgetPassword";
+import ProtectedRoute from "./Components/ProtectedRoute";
+import Signup from "./Components/Signup";
 
 
 const LoadingSpinner = () => (
@@ -20,10 +22,10 @@ const LoadingSpinner = () => (
 
 const AuthenticatedLayout = () => (
   <div className="app-container">
-    <MainComponent />
+    
     <div className="content-container">
       <Routes>
-        <Route element={<ProtectedRoute roles={['admin', 'cashier']} />}>
+        <Route element={<ProtectedRoute roles={['admin', 'user']} />}>
           <Route path="/" element={<HomePage />} />
         </Route>
 
@@ -31,9 +33,6 @@ const AuthenticatedLayout = () => (
           <Route path="/sell/view-sell" element={<Admin />} />
         </Route>
 
-       
-       
-        
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
@@ -49,6 +48,7 @@ const AppRoutes = () => {
         <>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/login/forget-password" element={<ForgetPassword />} />
+          <Route path="/sign-up" element={<Signup />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </>
       ) : (

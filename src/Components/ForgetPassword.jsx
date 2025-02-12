@@ -1,13 +1,35 @@
 import React, { useState } from "react";
-import { FaRegUser, FaLock } from "react-icons/fa";
-import { FcGoogle } from "react-icons/fc";
-import { BsFacebook, BsApple } from "react-icons/bs";
-import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
+import { FaRegUser } from "react-icons/fa";
 import bgImage from "../assets/bg7.jpg"; 
-
+import axiosInstance from "./Axios"; // Assuming you have this set up for axios API calls
 
 function ForgetPassword() {
-  const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      // Replace with your actual API endpoint for sending the reset code
+      const response = await axiosInstance.post('/api/send-reset-code/', { email });
+      
+      if (response.data.success) {
+        setSuccess("A reset code has been sent to your email.");
+      } else {
+        setError("Failed to send the reset code. Please try again.");
+      }
+    } catch (err) {
+      setError("An error occurred. Please check your email and try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div
@@ -29,39 +51,40 @@ function ForgetPassword() {
           Forgot Password?
         </h2>
         <p className="text-gray-600 text-sm text-center mb-6">
-        Enter your email and we will send you a restart code.
+          Enter your email and we will send you a reset code.
         </p>
 
+        {/* Error or Success Message */}
+        {error && <p className="text-red-500 text-center">{error}</p>}
+        {success && <p className="text-green-500 text-center">{success}</p>}
+
         {/* Input Fields */}
-        <form>
+        <form onSubmit={handleSubmit}>
           {/* Email Field */}
-          <div className="relative  mb-4">
+          <div className="relative mb-4">
             <FaRegUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
             <input
               type="email"
               placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-white/50 text-gray-900 rounded-lg border border-gray-300 focus:ring-2 focus:ring-black focus:outline-none"
+              required
             />
           </div>
 
-          {/* Password Field with Visibility Toggle */}
-         
-
-          
-
-          {/* Login Button */}
-          <button className="w-full mt-3 cursor-pointer bg-black text-white py-2 rounded-full text-lg font-semibold hover:bg-gray-900 transition">
-            Send Code
+          {/* Send Code Button */}
+          <button
+            type="submit"
+            className={`w-full mt-3 cursor-pointer bg-black text-white py-2 rounded-full text-lg font-semibold hover:bg-gray-900 transition ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={loading}
+          >
+            {loading ? "Sending..." : "Send Code"}
           </button>
         </form>
-
-        {/* Social Login */}
-       
-        
       </div>
     </div>
   );
 }
 
 export default ForgetPassword;
-

@@ -3,27 +3,47 @@ import { FaRegUser, FaLock } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
 import bgImage from "../assets/bg7.jpg"; 
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import axiosInstance from "./Axios";
-import { useAuth } from "./AuthContext";
 
-function LoginPage() {
+import { useAuth } from "./AuthContext";
+import { useNavigate } from "react-router-dom";
+
+function Signup() {
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false); // New state for loading effect
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { setUser } = useAuth(); 
+  const [name, setName] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true); // Start loading effect
+    if (password !== confirmPassword) {
+      setError("Passwords do not match!");
+      return;
+    }
+
+    setLoading(true); // Start loading state
 
     try {
+      // Sign up logic
+      const response = await axiosInstance.post('/auth/users/', {
+        email,
+        password,
+        name,
+        role: "user",
+      });
+      console.log(response.data);
+
+      try {
         const response = await axiosInstance.post('/api/token/', {
-            email,
-            password
+          email,
+          password
         });
 
         const { access, refresh } = response.data;
@@ -32,16 +52,22 @@ function LoginPage() {
         localStorage.setItem('refreshToken', refresh);
 
         await userDetail(email);
-    } catch (err) {
+        
+      } catch (err) {
         setError('Invalid email or password');
+      }
+
+    } catch (err) {
+      setError('An error occurred during sign-up');
     } finally {
-        setLoading(false); // End loading effect
+      setLoading(false); // End loading state
     }
   };
 
   const userDetail = async (email) => {
     try {
       const response = await axiosInstance.get(`/api/user-detail/?email=${email}`);
+      console.log("Raw response data:", response.data);
 
       let data;
       if (typeof response.data === 'string') {
@@ -60,9 +86,11 @@ function LoginPage() {
 
         setUser({ email, role: lowerCaseRole, name });
         navigate("/");
+
       } else {
         console.error("Unexpected data structure or fields is undefined");
       }
+
     } catch (err) {
       console.error("Error fetching user details:", err);
       setError('Invalid email or password');
@@ -74,27 +102,34 @@ function LoginPage() {
       className="relative h-screen w-screen bg-cover bg-center flex items-center justify-center"
       style={{ backgroundImage: `url(${bgImage})` }}
     >
-      {/* Blurred Overlay */}
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
 
-      {/* Glassmorphism Card */}
       <div className="relative backdrop-blur-lg bg-white/30 p-8 rounded-3xl shadow-lg w-[400px] border border-white/40">
-        {/* Logo */}
         <div className="flex justify-center mb-4">
           <FaRegUser className="text-4xl text-gray-700 bg-white p-2 rounded-full shadow-md" />
         </div>
 
-        {/* Title */}
         <h2 className="text-gray-900 text-2xl font-semibold text-center mb-2">
-          Sign in with email
+          Create an account
         </h2>
         <p className="text-gray-600 text-sm text-center mb-6">
-          Stay connected, celebrate graduates, and access fellowship events & memories.
+          Join us and start enjoying all the benefits!
         </p>
 
-        {/* Input Fields */}
         <form>
-          {/* Email Field */}
+          <div className="relative mb-4">
+            <FaRegUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+            <input
+              type="text"
+              placeholder="Full Name"
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              className="w-full pl-10 pr-4 py-2 bg-white/50 text-gray-900 rounded-lg border border-gray-300 focus:ring-2 focus:ring-black focus:outline-none"
+            />
+          </div>
+
           <div className="relative mb-4">
             <FaRegUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
             <input
@@ -108,18 +143,16 @@ function LoginPage() {
             />
           </div>
 
-          {/* Password Field with Visibility Toggle */}
           <div className="relative mb-2">
             <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
             <input
-              type={showPassword ? "text" : "password"}
+              type={showPassword ? 'text' : 'password'}
               placeholder="Password"
-              value={password} // bind to password state
+              value={password}
               required
               onChange={(e) => setPassword(e.target.value)}
               className="w-full pl-10 pr-10 py-2 bg-white/50 text-gray-900 rounded-lg border border-gray-300 focus:ring-2 focus:ring-black focus:outline-none"
             />
-            {/* Toggle Button */}
             <button
               type="button"
               id="password"
@@ -130,42 +163,46 @@ function LoginPage() {
             </button>
           </div>
 
-          <div className="text-right text-sm text-blue-500 hover:underline cursor-pointer mb-4">
-            <Link to={"/login/forget-password"}>Forgot password?</Link>
+          <div className="relative mt-4 mb-2">
+            <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+            <input
+              type={showConfirmPassword ? 'text' : 'password'}
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              required
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full pl-10 pr-10 py-2 bg-white/50 text-gray-900 rounded-lg border border-gray-300 focus:ring-2 focus:ring-black focus:outline-none"
+            />
+            <button
+              type="button"
+              id="confirmPassword"
+              className="absolute cursor-pointer right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+            >
+              {showConfirmPassword ? <AiFillEyeInvisible /> : <AiFillEye />}
+            </button>
           </div>
 
-          {/* Login Button */}
           <button
             onClick={handleSubmit}
-            className={`w-full cursor-pointer bg-black text-white py-2 rounded-full text-lg font-semibold hover:bg-gray-900 transition ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`w-full mt-3 cursor-pointer bg-black text-white py-2 rounded-full text-lg font-semibold hover:bg-gray-900 transition ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
             disabled={loading}
           >
-            {loading ? "Logging In..." : "Login"}
+            {loading ? "Signing Up..." : "Sign Up"}
           </button>
 
+          {error && <p className="text-red-500 text-center mt-4">{error}</p>}
+
           <p className="text-center text-sm mt-3 text-gray-400 lg:text-gray-200">
-            Don't have an account? 
-            <Link to={"/sign-up"}>
-              <span className="text-blue-400 lg:text-blue-600"> Sign up here</span>
+            Already have an account?{' '}
+            <Link to="/login">
+              <span className="text-blue-400 lg:text-blue-600">Log in here</span>
             </Link>
           </p>
         </form>
-
-        {/* Social Login */}
-        <p className="lg:text-gray-600 text-gray-300 text-sm text-center my-4">
-          <span className="lg:text-gray-700 text-gray-400 text-2xl text-center my-4">. . . . . . . . . . </span>
-          Or sign in with
-          <span className="lg:text-gray-700 text-gray-400 text-2xl text-center my-4">  . . . . . . . . . . </span>
-        </p>
-        <div className="pt-2">
-          <button className="bg-gray-200 w-full cursor-pointer border border-gray-300 rounded-full px-4 py-2 flex items-center justify-center shadow-sm hover:bg-gray-100 active:bg-gray-200 transition duration-200 ease-in-out">
-            <FcGoogle className="text-2xl w-5 h-5 mr-2" />
-            <span className="text-base font-medium text-gray-700">Continue with Google</span>
-          </button>
-        </div>
       </div>
     </div>
   );
 }
 
-export default LoginPage;
+export default Signup;
